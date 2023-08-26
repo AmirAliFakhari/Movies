@@ -31,13 +31,17 @@ export default function App() {
     setWatched(watched => [...watched, movie])
   }
 
+
+
   useEffect(function () {
+    const controller = new AbortController()
+
     async function fetchMovie() {
       try {
         setIsLoading(true);
         setError("")
         const res = await fetch(
-          `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+          `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`, { signal: controller.signal }
         );
 
         if (!res.ok) throw new Error("nope!");
@@ -47,8 +51,12 @@ export default function App() {
         if (data.Response === "False") throw new Error("no movie!");
         setMovies(data.Search);
         setIsLoading(false);
+        setError("")
       } catch (err) {
-        setError(err.message);
+        if (err.name !== "AbortError") {
+          setError(err.message);
+          console.error(err.message)
+        }
       } finally {
         setIsLoading(false);
       }
@@ -58,7 +66,14 @@ export default function App() {
       setError("");
       return;
     }
+
+    handleCloseMovie()
+
     fetchMovie();
+
+    return function () {
+      controller.abort()
+    }
   }, [query]);
 
   return (
@@ -186,6 +201,37 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 
   const isWatched = watched.map(movie => movie.imdbID).includes(selectedId)
   const watchedUserRating = watched.find(movie => movie.imdbID === selectedId)?.userRating;
+  useEffect(
+    function () {
+      function callback(e) {
+        if (e.code === 'Escape') {
+          onCloseMovie()
+        }
+      }
+
+      document.addEventListener('keydown', callback)
+
+      return function () {
+        document.addEventListener('keydown', callback)
+      }
+    }, [onCloseMovie]);
+
+
+
+  // function callback(e) {
+  //   if (e.code === 'Escape') {
+  //     onCloseMovie()
+  //     console.log('clsoed')
+  //   }
+  // }
+
+  // document.addEventListener('keydown', callback)
+  // return function () {
+  //   document.removeEventListener('keydown', callback)
+  // };
+
+
+
   useEffect(function () {
     async function getMovieDetails() {
       setIsLoading(true)
@@ -198,6 +244,8 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     }
     getMovieDetails()
   }, [selectedId])
+
+
   const { Title: title, Year: year, Poster: poster, Runtime: runtime, imdbRating, Plot: plot, Released: released, Actors: actors, Director: director, Genre: genre } = movie
 
 
@@ -217,6 +265,13 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     onAddWatched(newWatchedMovie)
     onCloseMovie()
   }
+  useEffect(function () {
+    if (!title) return;
+    document.title = `Movie | ${title}`
+    return function () {
+      document.title = `usePopCorn`
+    }
+  }, [title])
 
   return (
     <div className="details">

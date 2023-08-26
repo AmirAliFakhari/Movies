@@ -139,6 +139,7 @@ body {
   padding: 0.8rem 0;
   overflow: scroll;
   overflow-x: hidden;
+  background-color: var(--color-background-500);
 }
 
 .list::-webkit-scrollbar {
