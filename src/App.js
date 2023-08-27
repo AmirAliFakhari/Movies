@@ -16,7 +16,7 @@ export default function App() {
   const [error, setError] = useState("null");
   const [watched, setWatched] = useState(function () {
     const storedValue = localStorage.getItem('watched');
-    return JSON.parse(storedValue);
+    return [JSON.parse(storedValue)];
   });
 
   function handleDeleteWatched(id) {
